@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة زيارات أولياء الأمور - لوحة تحكم</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* --- المتغيرات العامة --- */
+        :root {
+            --font-family: 'Tajawal', sans-serif;
+            --border-radius: 10px;
+            --transition-speed: 0.25s;
+            --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.07);
+            --box-shadow-light: 0 2px 6px rgba(0, 0, 0, 0.05);
+            --box-shadow-strong: 0 6px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        /* --- السمات (Themes) --- */
+
+        /* 1. Mazer Light Theme */
+        body, body.theme-mazer-light {
+            --primary-color: #5E5DF0; --primary-dark: #4B4ACF;
+            --secondary-color: #f4f6fc; --card-bg: #ffffff; --sidebar-bg: #ffffff;
+            --text-color: #25396f; --text-muted: #6c757d; --border-color: #e9ecef;
+            --accent-color: #435ebe; --danger-color: #f3616d; --danger-dark: #d1434f;
+            --success-color: #50cd89; --success-dark: #40a46e; --warning-color: #ffc107;
+            --warning-dark: #e0a800; --info-color: #17a2b8; --info-dark: #117a8b;
+            --table-hover-bg: #f8f9fa; --table-even-bg: #ffffff; --input-bg: #ffffff;
+            --menu-hover-bg: var(--primary-color); --menu-hover-text: #ffffff;
+            --button-text: #ffffff; --button-gradient: linear-gradient(to right, var(--primary-color) 0%, var(--accent-color) 100%);
+            --table-header-bg: var(--card-bg); --table-header-text: var(--text-color); --table-header-border: #dee2e6;
+        }
+
+        /* 2. CRM Dark Theme */
+        body.theme-crm-dark {
+            --primary-color: #8A2BE2; --primary-dark: #7B1FA2; --secondary-color: #0d1117;
+            --card-bg: #161b22; --sidebar-bg: #161b22; --text-color: #c9d1d9;
+            --text-muted: #8b949e; --border-color: #30363d; --accent-color: #58a6ff;
+            --danger-color: #f85149; --danger-dark: #da3633; --success-color: #3fb950;
+            --success-dark: #2da042; --warning-color: #d29922; --warning-dark: #b08018;
+            --info-color: #0dcaf0; --info-dark: #0aa3c2; --table-hover-bg: #22272e;
+            --table-even-bg: #1a1f25; --input-bg: #0d1117; --menu-hover-bg: var(--primary-color);
+            --menu-hover-text: #ffffff; --button-text: #ffffff;
+            --button-gradient: linear-gradient(to right, var(--primary-color) 0%, var(--accent-color) 100%);
+            --table-header-bg: #21262d; --table-header-text: var(--text-color); --table-header-border: var(--border-color);
+        }
+
+        /* 3. السمة الكلاسيكية (أخضر) */
+        body.theme-classic-green {
+             --primary-color: #4CAF50; --primary-dark: #45a049; --secondary-color: #e8f5e9;
+             --card-bg: #ffffff; --sidebar-bg: #ffffff; --text-color: #333; --text-muted: #666;
+             --border-color: #ccc; --accent-color: #8BC34A; --danger-color: #f44336;
+             --danger-dark: #d32f2f; --success-color: var(--primary-color);
+             --success-dark: var(--primary-dark); --warning-color: #ff9800;
+             --warning-dark: #f57c00; --info-color: #00bcd4; --info-dark: #0097a7;
+             --table-hover-bg: #f1f1f1; --table-even-bg: #f9f9f9; --input-bg: #fff;
+             --menu-hover-bg: var(--primary-color); --menu-hover-text: var(--card-bg);
+             --button-text: var(--card-bg); --button-gradient: linear-gradient(to right, var(--primary-color) 0%, var(--primary-dark) 100%);
+             --table-header-bg: var(--card-bg); --table-header-text: var(--text-color); --table-header-border: #ccc;
+        }
+
+        /* --- تنسيقات عامة تستخدم المتغيرات --- */
+        *, *::before, *::after { box-sizing: border-box; }
+        body {
+            font-family: var(--font-family); margin: 0; padding: 0;
+            background-color: var(--secondary-color); color: var(--text-color);
+            display: flex; flex-direction: column; align-items: center;
+            min-height: 100vh;
+            transition: background-color var(--transition-speed), color var(--transition-speed);
+        }
+        .container {
+            width: 95%; max-width: 1000px; margin: 25px auto; padding: 30px;
+            background: var(--card-bg); border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow); display: none;
+            border: 1px solid var(--border-color);
+            transition: background-color var(--transition-speed), border-color var(--transition-speed), box-shadow var(--transition-speed);
+        }
+        .container.active { display: block; }
+        h2 {
+            text-align: center; color: var(--primary-color); margin-bottom: 30px;
+            font-weight: 700; transition: color var(--transition-speed);
+        }
+        h3 {
+            margin-top: 35px; margin-bottom: 20px; color: var(--primary-dark);
+            border-bottom: 1px solid var(--border-color); padding-bottom: 12px;
+            font-weight: 500; transition: color var(--transition-speed), border-color var(--transition-speed);
+        }
+        h4 {
+             margin-top: 25px; margin-bottom: 15px; color: var(--text-muted);
+             font-weight: 500;
+        }
+
+        /* --- القائمة --- */
+        .menu-icon {
+            position: fixed; top: 15px; right: 15px; font-size: 24px; cursor: pointer;
+            color: var(--primary-color); z-index: 1001; background: var(--card-bg);
+            padding: 10px 14px; border-radius: 50%; box-shadow: var(--box-shadow-light);
+            transition: background-color var(--transition-speed), color var(--transition-speed), border-color var(--transition-speed), box-shadow var(--transition-speed);
+            border: 1px solid var(--border-color);
+        }
+        .menu-icon:hover { background-color: var(--primary-color); color: var(--button-text); box-shadow: var(--box-shadow); }
+        .menu {
+            display: none; position: fixed; top: 70px; right: 15px; background: var(--sidebar-bg);
+            border: 1px solid var(--border-color); border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow); z-index: 1000; width: 280px; max-height: calc(100vh - 90px);
+            overflow-y: auto; transition: background-color var(--transition-speed), border-color var(--transition-speed);
+        }
+        .menu.active { display: block; }
+        .menu button, .menu .file-input-label {
+            width: 100%; padding: 14px 20px; border: none; background: none; cursor: pointer;
+            text-align: right; font-size: 15px; font-weight: 500; color: var(--text-color);
+            transition: background-color var(--transition-speed), color var(--transition-speed);
+            display: block; border-bottom: 1px solid var(--border-color);
+        }
+        .menu button:last-of-type, .menu .file-input-label:last-of-type { border-bottom: none; }
+        .menu button:hover, .menu .file-input-label:hover { background-color: var(--menu-hover-bg); color: var(--menu-hover-text); }
+        .menu input[type="file"] { display: none; }
+         hr.menu-divider {
+             border: none; height: 1px; background-color: var(--border-color);
+             margin: 8px 0; transition: background-color var(--transition-speed);
+         }
+
+        /* --- حقول الإدخال والأزرار --- */
+        textarea, input[type="text"], input[type="search"], input[type="radio"], input[type="checkbox"], select, button {
+            font-family: var(--font-family);
+        }
+        textarea, input[type="text"], input[type="search"], select {
+            width: 100%; padding: 12px 16px; margin-bottom: 16px;
+            border: 1px solid var(--border-color); border-radius: var(--border-radius);
+            font-size: 15px; background-color: var(--input-bg); color: var(--text-color);
+            transition: border-color var(--transition-speed), box-shadow var(--transition-speed), background-color var(--transition-speed), color var(--transition-speed);
+        }
+        input:focus, textarea:focus, select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color) 20%, transparent);
+            outline: none;
+        }
+        textarea { min-height: 70px; }
+        button {
+            background-image: var(--button-gradient); color: var(--button-text); border: none;
+            cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease, background-image var(--transition-speed);
+            font-weight: 500; padding: 12px 18px; border-radius: var(--border-radius);
+            width: 100%; margin-bottom: 10px; font-size: 15px;
+        }
+        button:hover { transform: translateY(-2px); box-shadow: var(--box-shadow-strong); }
+        button:active { transform: translateY(0); box-shadow: var(--box-shadow-light); }
+
+        /* --- أزرار بأنواع مختلفة --- */
+        button.secondary-btn { background-image: none; background-color: var(--text-muted); color: var(--button-text); }
+        button.secondary-btn:hover { background-color: color-mix(in srgb, var(--text-muted) 85%, black); }
+        button.danger-btn { background-image: none; background-color: var(--danger-color); color: var(--button-text); }
+        button.danger-btn:hover { background-color: var(--danger-dark); }
+        button.warning-btn { background-image: none; background-color: var(--warning-color); color: #fff; }
+        button.warning-btn:hover { background-color: var(--warning-dark); }
+        button.info-btn { background-image: none; background-color: var(--info-color); color: #fff; }
+        button.info-btn:hover { background-color: var(--info-dark); }
+
+        .action-buttons { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
+        .action-buttons button { flex-grow: 1; min-width: 120px; }
+
+        /* --- الجدول --- */
+        .table-responsive { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td {
+            border-bottom: 1px solid var(--border-color); padding: 14px; text-align: center;
+            vertical-align: middle; font-size: 14px;
+            transition: background-color var(--transition-speed), border-color var(--transition-speed), color var(--transition-speed);
+        }
+        th {
+            background-color: var(--table-header-bg); color: var(--table-header-text); font-weight: 700;
+            border-bottom: 2px solid var(--table-header-border); text-transform: uppercase; font-size: 13px;
+            transition: background-color var(--transition-speed), color var(--transition-speed), border-color var(--transition-speed);
+        }
+        tr:last-child td { border-bottom: none; }
+        tr:nth-child(even) { background-color: var(--table-even-bg); }
+        tr:hover td { background-color: var(--table-hover-bg); }
+        td .action-btn {
+            padding: 5px 10px; font-size: 13px; margin: 2px; min-width: auto; border-radius: 6px;
+            font-weight: 500; text-transform: none; box-shadow: none; transform: none;
+            background-image: none; color: #fff; /* Default text color */
+        }
+        td .action-btn:hover { transform: scale(1.05); }
+        .edit-btn { background-color: var(--warning-color); }
+        .edit-btn:hover { background-color: var(--warning-dark); }
+        .delete-btn { background-color: var(--danger-color); }
+        .delete-btn:hover { background-color: var(--danger-dark); }
+        .resend-btn { background-color: var(--info-color); }
+        .resend-btn:hover { background-color: var(--info-dark); }
+        .add-student-btn { background-color: var(--success-color); }
+        .add-student-btn:hover { background-color: var(--success-dark); }
+
+        /* --- الاقتراحات --- */
+        .suggestions-container { position: relative; margin-bottom: 16px; }
+        .suggestions-list {
+            position: absolute; border: 1px solid var(--border-color); max-height: 180px;
+            overflow-y: auto; background: var(--card-bg); border-radius: var(--border-radius);
+            margin-top: -10px; width: 100%; box-sizing: border-box; z-index: 999;
+            box-shadow: var(--box-shadow);
+            transition: background-color var(--transition-speed), border-color var(--transition-speed);
+        }
+        .suggestions-list div {
+            padding: 10px 15px; cursor: pointer; color: var(--text-color);
+            transition: background-color var(--transition-speed), color var(--transition-speed);
+        }
+        .suggestions-list div:hover { background-color: var(--table-hover-bg); }
+        .suggestions-list div.selected { background-color: var(--primary-color); color: var(--button-text); }
+
+        /* --- عناصر أخرى --- */
+        .info-text { font-size: 13px; color: var(--text-muted); margin-top: -10px; margin-bottom: 16px; }
+        .date-time { font-size: 14px; text-align: left; color: var(--text-muted); margin-bottom: 20px; }
+        #studentList .student-item, #reasonSuggestionsList .suggestion-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 12px; border: 1px solid var(--border-color); margin-bottom: 8px;
+            border-radius: var(--border-radius); background-color: transparent;
+            transition: box-shadow var(--transition-speed), background-color var(--transition-speed), border-color var(--transition-speed);
+            color: var(--text-color);
+        }
+        #studentList .student-item:hover, #reasonSuggestionsList .suggestion-item:hover { box-shadow: var(--box-shadow-light); background-color: var(--table-even-bg); }
+        #studentList .student-item span, #reasonSuggestionsList .suggestion-item span { flex-grow: 1; margin-right: 10px; font-weight: 500; }
+        #studentList .student-item button, #reasonSuggestionsList .suggestion-item button { margin-left: 5px; padding: 4px 8px; font-size: 12px; min-width: auto; }
+
+        /* --- الإشعارات ومؤشر الحالة --- */
+        .notification {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); color: #fff;
+            padding: 14px 25px; border-radius: var(--border-radius); box-shadow: var(--box-shadow);
+            display: none; z-index: 1002; opacity: 0;
+            transition: opacity 0.5s ease, transform 0.5s ease, background-color var(--transition-speed);
+            font-weight: 500; background-color: var(--primary-color); /* Default */
+        }
+        .notification.show { display: block; opacity: 1; transform: translate(-50%, -5px); }
+        .notification.error { background-color: var(--danger-color); }
+        .notification.info { background-color: var(--info-color); }
+        .notification.success { background-color: var(--success-color); }
+        .status-indicator {
+            position: fixed; bottom: 20px; right: 20px; padding: 8px 15px;
+            border-radius: var(--border-radius); font-size: 13px; color: #fff; z-index: 1000;
+            font-weight: 500; display: flex; align-items: center; gap: 8px;
+            transition: background-color var(--transition-speed);
+        }
+        .status-indicator.online { background-color: var(--success-color); }
+        .status-indicator.offline { background-color: var(--text-muted); }
+
+        /* --- حالات الجدول --- */
+        .status-sent { color: var(--success-color); font-weight: 500; }
+        .status-pending-offline { color: var(--text-muted); font-style: italic; }
+        .status-pending-online, .status-sending { color: var(--info-color); }
+
+        /* --- إعدادات المظهر والخيارات --- */
+        .settings-section { margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid var(--border-color); }
+        .settings-section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0;}
+        .settings-label { display: block; margin-bottom: 12px; font-weight: 500; color: var(--text-color); }
+        .theme-selector label, .option-selector label {
+            display: block; margin-bottom: 10px; cursor: pointer; color: var(--text-color);
+            transition: color var(--transition-speed); display: flex; align-items: center;
+        }
+        .theme-selector input[type="radio"], .option-selector input[type="checkbox"] {
+            margin-left: 10px; margin-right: 5px; accent-color: var(--primary-color);
+            width: 16px; height: 16px;
+        }
+
+         /* --- صفحة إدارة البيانات --- */
+         .data-management-section { margin-bottom: 30px; }
+         .data-management-section h4 { margin-top: 0; margin-bottom: 15px; }
+         .data-management-actions button, .data-management-actions label { display: block; width: 100%; margin-bottom: 10px; text-align: center; }
+
+        /* --- توافق الهاتف --- */
+        @media (max-width: 768px) {
+            .container { padding: 20px; margin-top: 20px; }
+            input, textarea, button, select { font-size: 15px; padding: 12px 15px; }
+            .menu { width: calc(100% - 30px); top: 65px; right: 15px; }
+            h2 { font-size: 1.5em; }
+            th, td { padding: 10px; font-size: 13px; }
+            td .action-btn { padding: 4px 8px; font-size: 12px; }
+            .action-buttons button { font-size: 14px; min-width: 100px; }
+            .notification { width: 90%; bottom: 15px; padding: 12px 20px; }
+            .status-indicator { bottom: 15px; right: 15px; font-size: 12px; padding: 7px 12px; }
+            th:nth-child(4), td:nth-child(4), th:nth-child(6), td:nth-child(6) { display: none; } /* Hide Day and Full Date */
+            td:last-child { min-width: auto; }
+            td:last-child button { display: inline-block; margin: 2px; }
+        }
+        @media (max-width: 480px) {
+             h2 { font-size: 1.3em; }
+             th, td { padding: 8px; font-size: 12px; }
+             button { padding: 10px 15px; font-size: 14px; }
+             .settings-label, h4 { font-size: 15px; }
+        }
+    </style>
+</head>
+<body class=""> <!-- Theme class added by JS -->
+
+    <div class="menu-icon" onclick="toggleMenu()">☰</div>
+    <div id="statusIndicator" class="status-indicator"></div>
+
+    <div class="menu" id="menu">
+        <button onclick="showPage('main')">الصفحة الرئيسية</button>
+        <button onclick="showPage('students')">إدارة التلاميذ</button>
+        <button onclick="showPage('visitsLog')">عرض كل السجل</button>
+        <hr class="menu-divider">
+        <button onclick="showTodayVisits()">عرض سجل اليوم (نافذة جديدة)</button>
+        <button onclick="promptSearchToday()">بحث في زيارات اليوم</button>
+        <button onclick="clearTodaySearch()">عرض كل زيارات اليوم</button>
+        <hr class="menu-divider">
+        <button onclick="showPage('dataManagement')">إدارة البيانات (تصدير/استيراد)</button>
+        <button onclick="attemptSendAllPendingToTelegram()">إرسال الزيارات المعلقة للقناة</button>
+        <hr class="menu-divider">
+        <button onclick="showPage('settings')">الإعدادات</button>
+    </div>
+
+    <!-- Main Page -->
+    <div class="container main-page active" id="mainPage">
+        <h2>تسجيل زيارات أولياء الأمور</h2>
+        <div class="date-time" id="dateTime"></div>
+        <form id="addVisitForm" onsubmit="addVisitHandler(event)">
+            <div class="suggestions-container">
+                <input type="text" id="studentName" placeholder="اسم التلميذ" autocomplete="off" required oninput="suggestStudent()" onkeydown="handleSuggestionKeyDown(event, 'suggestions', selectStudentFromSuggestion)">
+                <div class="suggestions-list" id="suggestions"></div>
+            </div>
+            <p id="studentInfo" class="info-text"></p>
+            <input type="text" id="manualClassSection" placeholder="الصف والشعبة" required>
+            <div class="suggestions-container">
+                <input type="text" id="visitReason" placeholder="سبب الزيارة" autocomplete="off" required oninput="suggestVisitReason()" onkeydown="handleSuggestionKeyDown(event, 'visitReasonSuggestions', selectVisitReasonFromSuggestion)">
+                <div class="suggestions-list" id="visitReasonSuggestions"></div>
+            </div>
+            <button type="submit" class="add-visit-btn">إضافة الزيارة</button>
+        </form>
+        <h3>سجل الزيارات اليوم (<span id="todayVisitCount">0</span>)</h3>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>اسم التلميذ</th><th>الصف والشعبة</th><th>سبب الزيارة</th>
+                        <th>اليوم</th><th>الوقت</th><th>التاريخ</th><th>الحالة</th><th>إجراءات</th>
+                    </tr>
+                </thead>
+                <tbody id="visitTableToday"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Students Management Page -->
+    <div class="container students-page" id="studentsPage">
+        <h2>إدارة التلاميذ</h2>
+        <textarea id="studentsInput" placeholder="أدخل أسماء التلاميذ هنا (كل اسم في سطر، يمكن إضافة الصف والشعبة بعد الاسم بفاصلة , أو / أو - )" rows="4"></textarea>
+        <input type="text" id="classSectionInput" placeholder="أو أدخل الصف والشعبة الافتراضي هنا">
+        <div class="action-buttons">
+            <button onclick="saveStudents()">إضافة التلاميذ</button>
+            <button class="danger-btn" onclick="deleteAllStudents()">حذف كل التلاميذ</button>
+        </div>
+        <h3>قائمة التلاميذ (<span id="studentCount">0</span>)</h3>
+        <input type="search" id="searchStudentInput" placeholder="بحث عن تلميذ..." oninput="filterStudentList()">
+        <div id="studentList">
+            <!-- Student items will be rendered here -->
+        </div>
+        <button onclick="showPage('main')" class="secondary-btn" style="margin-top: 20px;">العودة للرئيسية</button>
+    </div>
+
+    <!-- All Visits Log Page -->
+    <div class="container visits-log-page" id="visitsLogPage">
+        <h2>سجل جميع الزيارات (<span id="allVisitCount">0</span>)</h2>
+         <input type="search" id="searchAllInput" placeholder="بحث في جميع الزيارات..." oninput="filterAllVisitsTable()">
+         <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th><th>اسم التلميذ</th><th>الصف والشعبة</th><th>سبب الزيارة</th>
+                        <th>اليوم</th><th>الوقت</th><th>التاريخ</th><th>الحالة</th><th>إجراءات</th>
+                    </tr>
+                </thead>
+                <tbody id="visitTableAll"></tbody>
+            </table>
+         </div>
+         <button onclick="showPage('main')" class="secondary-btn" style="margin-top: 20px;">العودة للرئيسية</button>
+    </div>
+
+    <!-- Data Management Page -->
+    <div class="container data-management-page" id="dataManagementPage">
+        <h2>إدارة البيانات</h2>
+        <div class="data-management-section">
+            <h4>تصدير البيانات</h4>
+            <div class="data-management-actions">
+                <button onclick="exportVisitsText('all')" class="info-btn">تصدير كل الزيارات (TEXT)</button>
+                <button onclick="exportVisitsText('today')" class="info-btn">تصدير زيارات اليوم (TEXT)</button>
+                <button onclick="exportVisitsJson()" class="info-btn">تصدير الزيارات (JSON)</button>
+                <button onclick="exportStudentsJson()" class="info-btn">تصدير التلاميذ (JSON)</button>
+            </div>
+        </div>
+        <div class="data-management-section">
+            <h4>استيراد البيانات</h4>
+            <p style="color: var(--text-muted); font-size: 14px;">ملاحظة: الاستيراد سيضيف بيانات جديدة. قد يحدث تكرار للزيارات إذا لم تكن المعرفات فريدة.</p>
+            <div class="data-management-actions">
+                <label for="importVisitFile" class="file-input-label secondary-btn">استيراد الزيارات (JSON)</label>
+                <input type="file" id="importVisitFile" accept=".json" onchange="handleImportVisits(event)">
+                <label for="importStudentsFile" class="file-input-label secondary-btn">استيراد التلاميذ (JSON)</label>
+                <input type="file" id="importStudentsFile" accept=".json" onchange="handleImportStudents(event)">
+            </div>
+        </div>
+        <button onclick="showPage('main')" class="secondary-btn" style="margin-top: 20px;">العودة للرئيسية</button>
+    </div>
+
+    <!-- Settings Page -->
+    <div class="container settings-page" id="settingsPage">
+        <h2>الإعدادات</h2>
+        <div class="settings-section">
+            <span class="settings-label">مظهر الصفحة</span>
+            <div class="theme-selector" id="themeSelector">
+                <label><input type="radio" name="theme" value="theme-mazer-light"> فاتح (Mazer)</label>
+                <label><input type="radio" name="theme" value="theme-crm-dark"> داكن (CRM)</label>
+                <label><input type="radio" name="theme" value="theme-classic-green"> كلاسيكي (أخضر)</label>
+            </div>
+        </div>
+         <div class="settings-section">
+             <span class="settings-label">تفاعل Telegram</span>
+             <div class="option-selector">
+                <label><input type="checkbox" id="silentTelegramDeleteToggle" onchange="updateTelegramSettings(this)"> حذف صامت من Telegram</label>
+                <label><input type="checkbox" id="directTelegramEditToggle" onchange="updateTelegramSettings(this)"> تعديل مباشر في Telegram</label>
+             </div>
+              <p style="color: var(--text-muted); font-size: 13px; margin-top: 10px;">ملاحظة: يتطلب معرف رسالة Telegram.</p>
+              <h4 style="margin-top: 20px;">إعدادات الاتصال</h4>
+              <div>
+                  <label for="telegramBotTokenInput" class="settings-label" style="margin-bottom: 5px;">رمز البوت (Bot Token):</label>
+                  <input type="text" id="telegramBotTokenInput" placeholder="أدخل رمز البوت" style="margin-bottom: 10px; direction: ltr; text-align: left;">
+              </div>
+               <div>
+                   <label for="telegramChannelIdInput" class="settings-label" style="margin-bottom: 5px;">معرف القناة (Channel ID):</label>
+                   <input type="text" id="telegramChannelIdInput" placeholder="أدخل معرف القناة (مثال: -100...)" style="margin-bottom: 10px; direction: ltr; text-align: left;">
+               </div>
+               <button onclick="saveTelegramCredentials()" class="info-btn">حفظ إعدادات Telegram</button>
+          </div>
+         <div class="settings-section">
+             <span class="settings-label">إدارة اقتراحات سبب الزيارة</span>
+             <div>
+                 <input type="text" id="newReasonSuggestion" placeholder="اقتراح جديد">
+                 <button onclick="addNewReasonSuggestion()" class="info-btn">إضافة اقتراح</button>
+             </div>
+             <h4>الاقتراحات الحالية:</h4>
+             <div id="reasonSuggestionsList"></div>
+         </div>
+         <button onclick="showPage('main')" class="secondary-btn" style="margin-top: 10px;">العودة للرئيسية</button>
+    </div>
+
+    <!-- Notification Area -->
+    <div class="notification" id="notification"></div>
+
+    <script>
+        // --- Core Settings & Config ---
+        let config = {
+            botToken: localStorage.getItem('telegramBotToken') || '7803571656:AAGQ6o-A1sK5NlinfTLJIn1pD92cKmifVhg',
+            channelId: localStorage.getItem('telegramChannelId') || '-1002461430057',
+            silentTelegramDelete: JSON.parse(localStorage.getItem('silentTelegramDelete') || 'false'),
+            directTelegramEdit: JSON.parse(localStorage.getItem('directTelegramEdit') || 'false')
+        };
+        let TELEGRAM_API_BASE = config.botToken ? `https://api.telegram.org/bot${config.botToken}/` : '';
+
+        // --- State Management ---
+        let students = [];
+        let visits = [];
+        let visitReasonSuggestions = [];
+        let suggestionIndex = -1;
+        let currentTheme = localStorage.getItem('selectedTheme') || 'theme-mazer-light';
+
+        // --- App Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            applyTheme(currentTheme);
+            updateDateTime(); setInterval(updateDateTime, 1000);
+            updateStatusIndicator();
+            loadDataFromLocalStorage();
+            renderInitialUI();
+            setupEventListeners();
+            setupInitialSettingsUI();
+            checkInternetAndSendPendingVisits();
+            validateTelegramConfig(false);
+        });
+
+        function loadDataFromLocalStorage() {
+            console.log("Loading data...");
+            try {
+                students = JSON.parse(localStorage.getItem('students')) || [];
+                visits = JSON.parse(localStorage.getItem('visits')) || [];
+                visitReasonSuggestions = JSON.parse(localStorage.getItem('visitReasonSuggestions')) || ["خروج مع الأب", "خروج مع الأم", "خروج مع الأخ/الأخت", "خروج مع الخال/الخالة", "خروج مع الجد/الجدة", "خروج مع سائق الباص", "زيارة قسم الحسابات", "استئذان لظرف طارئ", "إجازة مرضية", "استدعاء من الإدارة", "اجتماع أولياء الأمور", "تسليم مستلزمات", "استلام شهادة"];
+
+                // Data restructuring/validation
+                visits = visits.map(v => ({
+                    id: v.id || generateUniqueId('visit'),
+                    timestamp: v.timestamp || new Date().toISOString(),
+                    ...v,
+                    telegramMessageId: v.telegramMessageId || null,
+                    needsStudentAdd: !students.some(s => s.name === v.studentName && s.classSection === v.classSection)
+                }));
+                students = students.map(s => ({ id: s.id || generateUniqueId('stu'), ...s }));
+                visits.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                saveDataToLocalStorage(); // Save potentially restructured data
+                console.log("Data loaded/restructured.");
+            } catch (error) {
+                console.error("Error loading data:", error);
+                showNotification("خطأ تحميل البيانات.", "error");
+                students = []; visits = []; visitReasonSuggestions = [/* defaults */];
+            }
+        }
+
+        function saveDataToLocalStorage() {
+             try {
+                localStorage.setItem('students', JSON.stringify(students));
+                localStorage.setItem('visits', JSON.stringify(visits));
+                localStorage.setItem('visitReasonSuggestions', JSON.stringify(visitReasonSuggestions));
+             } catch (error) { console.error("Error saving data:", error); showNotification("خطأ حفظ البيانات.", "error"); }
+         }
+
+        function renderInitialUI() {
+            console.log("Rendering UI...");
+            updateVisitTables();
+            updateStudentList();
+            updateCounts();
+        }
+
+        function setupEventListeners() {
+            console.log("Setting up listeners...");
+            window.addEventListener('online', handleOnline);
+            window.addEventListener('offline', handleOffline);
+            document.addEventListener('click', handleClickOutsideSuggestions);
+            document.getElementById('themeSelector').addEventListener('change', handleThemeChange);
+        }
+
+        function setupInitialSettingsUI() {
+             console.log("Setting up settings UI...");
+            document.getElementById('silentTelegramDeleteToggle').checked = config.silentTelegramDelete;
+            document.getElementById('directTelegramEditToggle').checked = config.directTelegramEdit;
+            document.getElementById('telegramBotTokenInput').value = config.botToken || '';
+            document.getElementById('telegramChannelIdInput').value = config.channelId || '';
+            const currentThemeRadio = document.querySelector(`.theme-selector input[value="${currentTheme}"]`);
+            if (currentThemeRadio) currentThemeRadio.checked = true;
+        }
+
+        // --- Page Navigation & Menu ---
+        function toggleMenu() { document.getElementById('menu').classList.toggle('active'); }
+        function showPage(pageId) {
+            document.querySelectorAll('.container').forEach(c => c.classList.remove('active'));
+            const page = document.getElementById(`${pageId}Page`);
+            if (page) {
+                page.classList.add('active');
+                if (pageId === 'settings') {
+                    renderVisitReasonSuggestionsList();
+                    document.getElementById('telegramBotTokenInput').value = config.botToken || '';
+                    document.getElementById('telegramChannelIdInput').value = config.channelId || '';
+                    document.getElementById('silentTelegramDeleteToggle').checked = config.silentTelegramDelete;
+                    document.getElementById('directTelegramEditToggle').checked = config.directTelegramEdit;
+                }
+                if (pageId === 'main' || pageId === 'visitsLog') updateVisitTables();
+                if (pageId === 'students') updateStudentList();
+                updateCounts();
+            } else { console.error(`Page ${pageId}Page not found.`); document.getElementById('mainPage').classList.add('active'); }
+            if (document.getElementById('menu').classList.contains('active')) toggleMenu();
+        }
+
+        // --- Date/Time & Connection ---
+        function updateDateTime() { const d=new Date(); document.getElementById('dateTime').textContent = `اليوم: ${d.toLocaleDateString('ar-EG',{weekday:'long'})}، ${d.toLocaleDateString('ar-EG')} | الوقت: ${d.toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})}`; }
+        function updateStatusIndicator() { const i=document.getElementById('statusIndicator'); if(navigator.onLine){i.textContent='متصل'; i.className='status-indicator online';}else{i.textContent='غير متصل'; i.className='status-indicator offline';} }
+        function handleOnline() { updateStatusIndicator(); showNotification('استعادة الاتصال.', 'success'); checkInternetAndSendPendingVisits(); }
+        function handleOffline() { updateStatusIndicator(); showNotification('فقد الاتصال.', 'info'); }
+
+        // --- Student Management ---
+        function saveStudents(){const nI=document.getElementById('studentsInput'),dCS=document.getElementById('classSectionInput').value.trim()||'غير محدد',names=nI.value.trim();if(!names){showNotification('أدخل أسماء التلاميذ.','error');return;}let added=0;names.split('\n').forEach(l=>{l=l.trim();if(l){let n=l,cS=dCS;[',','/','-'].forEach(s=>{if(l.includes(s)){const p=l.split(s);n=p[0].trim();cS=p.slice(1).join(s).trim();}});if(!students.some(st=>st.name===n&&st.classSection===cS)){students.push({id:generateUniqueId('stu'),name:n,classSection:cS});added++;}}});if(added>0){saveDataToLocalStorage();updateStudentList();updateCounts();showNotification(`تمت إضافة ${added} تلميذ.`,'success');nI.value='';document.getElementById('classSectionInput').value='';}else{showNotification('لم تتم إضافة تلاميذ جدد.','info');}}
+        function addStudentFromVisit(sN,cS,vId){sN=sN.trim();cS=cS.trim();if(!sN||!cS){showNotification('اسم أو صف غير صالح.','error');return;}if(!students.some(s=>s.name===sN&&s.classSection===cS)){students.push({id:generateUniqueId('stu'),name:sN,classSection:cS});saveDataToLocalStorage();updateStudentList();updateCounts();showNotification(`تمت إضافة "${sN}" (${cS}).`,'success');const vIdx=visits.findIndex(v=>v.id===vId);if(vIdx!==-1){visits[vIdx].needsStudentAdd=false;saveDataToLocalStorage();updateVisitTables();}}else{showNotification(`"${sN}" (${cS}) موجود.`,'info');const vIdx=visits.findIndex(v=>v.id===vId);if(vIdx!==-1&&visits[vIdx].needsStudentAdd){visits[vIdx].needsStudentAdd=false;saveDataToLocalStorage();updateVisitTables();}}}
+        function updateStudentList(filtered=students){const listDiv=document.getElementById('studentList');if(!listDiv){console.error("#studentList not found!");return;}listDiv.innerHTML='';if(filtered.length===0&&students.length>0){listDiv.innerHTML='<p style="text-align:center;color:var(--text-muted);">لا توجد نتائج.</p>';return;}filtered.sort((a,b)=>a.name.localeCompare(b.name)).forEach(s=>{const d=document.createElement('div');d.className='student-item';d.innerHTML=`<span>${s.name} (${s.classSection})</span><div><button class="edit-btn action-btn" onclick="editStudent('${s.id}')">تعديل</button><button class="delete-btn action-btn" onclick="deleteStudent('${s.id}')">حذف</button></div>`;listDiv.appendChild(d);});if(students.length===0)listDiv.innerHTML='<p style="text-align:center;color:var(--text-muted);">لا يوجد تلاميذ.</p>';}
+        function filterStudentList(){const term=document.getElementById('searchStudentInput').value.toLowerCase();const filt=students.filter(s=>s.name.toLowerCase().includes(term)||s.classSection.toLowerCase().includes(term));updateStudentList(filt);}
+        function editStudent(id){const idx=students.findIndex(s=>s.id===id);if(idx===-1)return;const s=students[idx],nN=prompt('تعديل الاسم:',s.name);if(nN===null)return;const nCS=prompt('تعديل الصف:',s.classSection);if(nCS===null)return;if(nN.trim()&&nCS.trim()){students[idx].name=nN.trim();students[idx].classSection=nCS.trim();saveDataToLocalStorage();updateStudentList();updateCounts();showNotification('تم تعديل التلميذ.','success');}else{showNotification('اسم أو صف غير صالح.','error');}}
+        function deleteStudent(id){const idx=students.findIndex(s=>s.id===id);if(idx===-1)return;const s=students[idx];if(confirm(`حذف: ${s.name} (${s.classSection})؟`)){students.splice(idx,1);saveDataToLocalStorage();updateStudentList();updateCounts();showNotification('تم حذف التلميذ.','success');}}
+        function deleteAllStudents(){if(confirm('⚠️ حذف كل التلاميذ؟')){students=[];saveDataToLocalStorage();updateStudentList();updateCounts();showNotification('تم حذف كل التلاميذ.','success');}}
+
+        // --- Suggestions ---
+        function suggestStudent(){const inp=document.getElementById('studentName').value.toLowerCase(),div=document.getElementById('suggestions');if(!div)return; div.innerHTML='';suggestionIndex=-1;if(inp.length<1){div.style.display='none';return;}const filt=students.filter(s=>s.name.toLowerCase().includes(inp)).slice(0,7);if(filt.length>0){filt.forEach((s,i)=>{const el=document.createElement('div');el.textContent=`${s.name} (${s.classSection})`;el.onmousedown=(e)=>{e.preventDefault();selectStudent(s);};el.id=`suggestion-${i}`;div.appendChild(el);});div.style.display='block';}else{div.style.display='none';}}
+        function selectStudent(s){document.getElementById('studentName').value=s.name;document.getElementById('manualClassSection').value=s.classSection;const suggestionsDiv = document.getElementById('suggestions'); if (suggestionsDiv) suggestionsDiv.style.display='none'; document.getElementById('visitReason').focus();}
+        function selectStudentFromSuggestion(idx){const div=document.getElementById('suggestions'),sel=div.children[idx];if(sel){const txt=sel.textContent,p=txt.match(/(.+)\s\((.+)\)/);if(p){const n=p[1],cs=p[2],s=students.find(st=>st.name===n&&st.classSection===cs);if(s)selectStudent(s);}}}
+        function suggestVisitReason(){const inp=document.getElementById('visitReason').value.toLowerCase(),div=document.getElementById('visitReasonSuggestions');if(!div)return; div.innerHTML='';suggestionIndex=-1;if(inp.length<1&&!document.getElementById('visitReason').matches(':focus')){div.style.display='none';return;}const filt=visitReasonSuggestions.filter(r=>r.toLowerCase().includes(inp)).slice(0,7);if(filt.length>0||inp.length>0){filt.forEach((r,i)=>{const el=document.createElement('div');el.textContent=r;el.onmousedown=(e)=>{e.preventDefault();selectVisitReason(r);};el.id=`reason-suggestion-${i}`;div.appendChild(el);});div.style.display='block';}else{div.style.display='none';}}
+        function selectVisitReason(r){document.getElementById('visitReason').value=r; const suggestionsDiv = document.getElementById('visitReasonSuggestions'); if (suggestionsDiv) suggestionsDiv.style.display='none'; document.querySelector('.add-visit-btn').focus();}
+        function selectVisitReasonFromSuggestion(idx){const div=document.getElementById('visitReasonSuggestions'),sel=div.children[idx];if(sel)selectVisitReason(sel.textContent);}
+        function handleClickOutsideSuggestions(e){const sDiv=document.getElementById('suggestions'),rDiv=document.getElementById('visitReasonSuggestions'),sIn=document.getElementById('studentName'),rIn=document.getElementById('visitReason');if(sDiv&&sDiv.style.display==='block'&&!sDiv.contains(e.target)&&e.target!==sIn)sDiv.style.display='none';if(rDiv&&rDiv.style.display==='block'&&!rDiv.contains(e.target)&&e.target!==rIn)rDiv.style.display='none';}
+        function handleSuggestionKeyDown(e,sId,cb){const div=document.getElementById(sId);if(!div||div.style.display!=='block'||div.children.length===0){if(e.key==='Enter'&&sId==='suggestions'){e.preventDefault();document.getElementById('manualClassSection').focus();}else if(e.key==='Enter'&&sId==='visitReasonSuggestions'){e.preventDefault();addVisitHandler(new Event('submit'));}return;}const items=div.children;let cur=suggestionIndex;if(e.key==='ArrowDown'){e.preventDefault();cur=(cur<items.length-1)?cur+1:0;}else if(e.key==='ArrowUp'){e.preventDefault();cur=(cur>0)?cur-1:items.length-1;}else if(e.key==='Enter'){e.preventDefault();if(cur>=0&&cur<items.length)cb(cur);else{if(sId==='visitReasonSuggestions')addVisitHandler(new Event('submit'));else document.getElementById('manualClassSection').focus();}suggestionIndex=-1;return;}else if(e.key==='Escape'){e.preventDefault();div.style.display='none';suggestionIndex=-1;return;}else{return;}for(let i=0;i<items.length;i++)items[i].classList.remove('selected');if(cur>=0&&cur<items.length){items[cur].classList.add('selected');items[cur].scrollIntoView({block:'nearest'});}suggestionIndex=cur;}
+
+        // --- Visit Management ---
+        function addVisitHandler(e){e.preventDefault();addVisit();}
+        function addVisit(){const sNI=document.getElementById('studentName'),vRI=document.getElementById('visitReason'),cSI=document.getElementById('manualClassSection');const sN=sNI.value.trim(),vR=vRI.value.trim(),mCS=cSI.value.trim();if(!sN||!vR||!mCS){showNotification('يرجى ملء الحقول.','error');return;}const now=new Date(),visit={id:generateUniqueId('visit'),studentName:sN,classSection:mCS,visitReason:vR,day:now.toLocaleDateString('ar-EG',{weekday:'long'}),time:now.toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'}),fullDate:now.toLocaleDateString('ar-EG'),timestamp:now.toISOString(),isSent:false,telegramMessageId:null,needsStudentAdd:!students.some(s=>s.name===sN&&s.classSection===mCS)};visits.unshift(visit);saveDataToLocalStorage();updateVisitTables();updateCounts();sendVisitToTelegramIfOnline(visit);showNotification(`تمت إضافة زيارة لـ ${sN}.`,'success');if(visit.needsStudentAdd)showNotification(`ملاحظة: "${sN}" غير موجود بالقائمة.`,'info');console.log("Clearing fields...");sNI.value='';vRI.value='';cSI.value='';sNI.focus();}
+        function updateVisitTables(){renderTable('visitTableToday',filterVisitsToday(visits),true);renderTable('visitTableAll',visits,false);}
+        function filterVisitsToday(all){const today=new Date().toLocaleDateString('ar-EG');return all.filter(v=>v.fullDate===today);}
+        function renderTable(tId,data,isToday){const tBody=document.getElementById(tId);if(!tBody){console.error(`Element #${tId} not found!`);return;}tBody.innerHTML='';if(data.length===0){const cs=tId==='visitTableAll'?9:8;tBody.innerHTML=`<tr><td colspan="${cs}" style="text-align:center;color:var(--text-muted);padding:20px;">لا توجد زيارات.</td></tr>`;return;}data.forEach((v,i)=>{const row=document.createElement('tr');row.setAttribute('data-id',v.id);let statTxt,statCls;if(v.isSent)statTxt='تم الإرسال',statCls='status-sent';else if(!navigator.onLine)statTxt='بانتظار الاتصال',statCls='status-pending-offline';else statTxt='بانتظار الإرسال',statCls='status-pending-online';let acts=`<button class="edit-btn action-btn" onclick="editVisit('${v.id}')" title="تعديل">تعديل</button><button class="delete-btn action-btn" onclick="deleteVisit('${v.id}')" title="حذف">حذف</button>`;if(!v.isSent&&v.telegramMessageId===null)acts+=`<button class="resend-btn action-btn" onclick="resendVisit('${v.id}')" title="إرسال للقناة">إرسال</button>`;if(v.needsStudentAdd)acts+=`<button class="add-student-btn action-btn" onclick="addStudentFromVisit('${v.studentName.replace(/'/g,"\\'")}', '${v.classSection.replace(/'/g,"\\'")}', '${v.id}')" title="إضافة الطالب">إضافة طالب</button>`;row.innerHTML=`${tId==='visitTableAll'?`<td>${i+1}</td>`:''}<td>${v.studentName}</td><td>${v.classSection}</td><td>${v.visitReason}</td><td>${v.day}</td><td>${v.time}</td><td>${v.fullDate}</td><td class="${statCls}">${statTxt}</td><td>${acts}</td>`;tBody.appendChild(row);});}
+        function promptSearchToday(){const term=prompt("البحث في زيارات اليوم:");if(term!==null)filterTodayTable(term.toLowerCase());if(document.getElementById('menu').classList.contains('active'))toggleMenu();}
+        function filterTodayTable(term=""){const today=filterVisitsToday(visits);let filt=today;if(term)filt=today.filter(v=>v.studentName.toLowerCase().includes(term)||v.classSection.toLowerCase().includes(term)||v.visitReason.toLowerCase().includes(term));renderTable('visitTableToday',filt,true);if(term)showNotification(`تم العثور على ${filt.length} نتيجة لـ "${term}".`,'info');}
+        function clearTodaySearch(){filterTodayTable("");showNotification("عرض كل زيارات اليوم.","info");if(document.getElementById('menu').classList.contains('active'))toggleMenu();}
+        function filterAllVisitsTable(){const term=document.getElementById('searchAllInput').value.toLowerCase();const filt=visits.filter(v=>v.studentName.toLowerCase().includes(term)||v.classSection.toLowerCase().includes(term)||v.visitReason.toLowerCase().includes(term)||v.day.toLowerCase().includes(term)||v.fullDate.includes(term));renderTable('visitTableAll',filt,false);}
+        function editVisit(id){const idx=visits.findIndex(v=>v.id===id);if(idx===-1)return;const v={...visits[idx]};const nN=prompt('تعديل الاسم:',v.studentName);if(nN===null)return;const nCS=prompt('تعديل الصف:',v.classSection);if(nCS===null)return;const nVR=prompt('تعديل السبب:',v.visitReason);if(nVR===null)return;if(nN.trim()&&nCS.trim()&&nVR.trim()){const sExists=students.some(s=>s.name===nN.trim()&&s.classSection===nCS.trim());const uData={studentName:nN.trim(),classSection:nCS.trim(),visitReason:nVR.trim(),lastModified:new Date().toISOString(),needsStudentAdd:!sExists};visits[idx]={...v,...uData};saveDataToLocalStorage();updateVisitTables();updateCounts();if(config.directTelegramEdit&&v.isSent&&v.telegramMessageId){const nTxt=generateTelegramMessageText(visits[idx]);editTelegramMessage(v.telegramMessageId,nTxt);showNotification('تم التعديل محلياً وجاري التعديل في Telegram.','info');}else if(v.isSent&&v.telegramMessageId){showNotification('تم التعديل محلياً. التعديل المباشر في Telegram غير مفعل.','success');}else{showNotification('تم التعديل محلياً.','success');}if(visits[idx].needsStudentAdd)showNotification(`ملاحظة: "${visits[idx].studentName}" غير موجود بالقائمة.`,'info');}else{showNotification('فشل التعديل.','error');}}
+        function deleteVisit(id){const idx=visits.findIndex(v=>v.id===id);if(idx===-1)return;const v=visits[idx];if(confirm(`حذف زيارة: ${v.studentName}؟`)){const wasSent=v.isSent,msgId=v.telegramMessageId;visits.splice(idx,1);saveDataToLocalStorage();updateVisitTables();updateCounts();if(config.silentTelegramDelete&&wasSent&&msgId){deleteTelegramMessage(msgId);showNotification('تم الحذف محلياً وجاري الحذف من Telegram.','success');}else{showNotification('تم الحذف محلياً.','success');}}}
+        function resendVisit(id){const v=visits.find(v=>v.id===id);if(v){if(navigator.onLine){showNotification(`إرسال زيارة ${v.studentName}...`,'info');v.isSent=false;sendVisitToTelegram(v);}else{showNotification('غير متصل.','error');}}}
+        function updateCounts(){try{const sc=document.getElementById('studentCount'),tc=document.getElementById('todayVisitCount'),ac=document.getElementById('allVisitCount');if(sc)sc.textContent=students.length;if(tc)tc.textContent=filterVisitsToday(visits).length;if(ac)ac.textContent=visits.length;}catch(e){console.error("Error updating counts:", e);}}
+
+        // --- Telegram Integration ---
+        function validateTelegramConfig(notify=true){const valid=config.botToken&&config.channelId;if(!valid&&notify){showNotification('خطأ: إعدادات Telegram غير مكتملة!','error');console.warn("TG config missing.");}return valid;}
+        async function sendVisitToTelegram(v){console.log(`Send visit ${v.id}...`);if(!validateTelegramConfig()){updateVisitStatusInUI(v.id,false);return;}if(v.isSent){console.log(`${v.id} already sent.`);updateVisitStatusInUI(v.id,true);return;}updateVisitStatusInUI(v.id,'sending');const txt=generateTelegramMessageText(v);console.log(`Sending ${v.id}:`,txt);try{const resp=await fetch(TELEGRAM_API_BASE+'sendMessage',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:config.channelId,text:txt,parse_mode:'Markdown'})});const data=await resp.json();console.log(`TG resp for ${v.id}:`,data);if(data.ok&&data.result&&data.result.message_id){const idx=visits.findIndex(vi=>vi.id===v.id);if(idx!==-1){visits[idx].isSent=true;visits[idx].telegramMessageId=data.result.message_id;saveDataToLocalStorage();updateVisitStatusInUI(v.id,true);console.log(`Visit ${v.id} sent. Msg ID: ${data.result.message_id}`);}}else{console.error(`TG API Error send ${v.id}:`,data.description||'Unknown');showNotification(`فشل إرسال ${v.id}: ${data.description||'خطأ غير معروف'}`,'error');updateVisitStatusInUI(v.id,false);}}catch(err){console.error(`Network Error send ${v.id}:`,err);showNotification(`خطأ شبكة إرسال ${v.id}: ${err.message}`,'error');updateVisitStatusInUI(v.id,false);}}
+        function generateTelegramMessageText(v){return`✅ زيارة (ID: ${v.id})\n-------------------------\n👤 التلميذ: ${v.studentName}\n🏫 الصف: ${v.classSection}\n📝 السبب: ${v.visitReason}\n📅 التاريخ: ${v.day}, ${v.fullDate}\n⏰ الوقت: ${v.time}`.trim();}
+        async function deleteTelegramMessage(mId){if(!navigator.onLine||!validateTelegramConfig(false)||!mId)return;console.log(`Silent delete msg ${mId}`);try{const r=await fetch(TELEGRAM_API_BASE+'deleteMessage',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:config.channelId,message_id:mId})});const d=await r.json();if(!d.ok)console.error(`TG Error (delete ${mId}):`,d.description);else console.log(`Msg ${mId} deleted.`);}catch(e){console.error(`Network Error delete ${mId}:`,e);}}
+        async function editTelegramMessage(mId,nTxt){if(!navigator.onLine||!validateTelegramConfig(false)||!mId)return;console.log(`Direct edit msg ${mId}`);try{const r=await fetch(TELEGRAM_API_BASE+'editMessageText',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:config.channelId,message_id:mId,text:nTxt,parse_mode:'Markdown'})});const d=await r.json();if(!d.ok){console.error(`TG Error (edit ${mId}):`,d.description);showNotification(`فشل تعديل TG (ID: ${mId}). السبب: ${d.description}`,'error');}else console.log(`Msg ${mId} edited.`);}catch(e){console.error(`Network Error edit ${mId}:`,e);showNotification(`خطأ شبكة تعديل TG ${mId}.`,'error');}}
+        function sendVisitToTelegramIfOnline(v){if(navigator.onLine)sendVisitToTelegram(v);else{showNotification('غير متصل. تم الحفظ.','info');updateVisitStatusInUI(v.id,false);}}
+        function checkInternetAndSendPendingVisits(){if(navigator.onLine){const pending=visits.filter(v=>!v.isSent&&!v.telegramMessageId);if(pending.length>0){showNotification(`إرسال ${pending.length} زيارة معلقة...`,'info');let delay=0;const promises=pending.map(v=>new Promise(res=>{setTimeout(()=>{sendVisitToTelegram(v).then(res);},delay);delay+=300;}));Promise.all(promises).then(()=>console.log("Finished pending sends."));}}}
+        function attemptSendAllPendingToTelegram(){if(navigator.onLine){const count=visits.filter(v=>!v.isSent&&!v.telegramMessageId).length;if(count>0){if(confirm(`توجد ${count} زيارة لم ترسل. إرسالها؟`))checkInternetAndSendPendingVisits();}else showNotification('لا توجد زيارات معلقة.','info');}else showNotification('غير متصل.','error');if(document.getElementById('menu').classList.contains('active'))toggleMenu();}
+        function updateVisitStatusInUI(vId,status){const rows=document.querySelectorAll(`tr[data-id="${vId}"]`);rows.forEach(row=>{const sCell=row.cells[row.cells.length-2],aCell=row.cells[row.cells.length-1];if(!sCell||!aCell)return;let resendBtn=aCell.querySelector('.resend-btn');const visit=visits.find(v=>v.id===vId);if(status===true){sCell.textContent='تم الإرسال';sCell.className='status-sent';if(resendBtn)resendBtn.remove();}else if(status==='sending'){sCell.textContent='جاري الإرسال...';sCell.className='status-sending';}else{sCell.textContent=navigator.onLine?'بانتظار الإرسال':'بانتظار الاتصال';sCell.className=navigator.onLine?'status-pending-online':'status-pending-offline';if(!resendBtn&&(!visit||!visit.telegramMessageId)){const btn=document.createElement('button');btn.className='resend-btn action-btn';btn.title='إرسال للقناة';btn.textContent='إرسال';btn.onclick=()=>resendVisit(vId);const addStuBtn=aCell.querySelector('.add-student-btn');if(addStuBtn)aCell.insertBefore(btn,addStuBtn);else aCell.appendChild(btn);}else if(resendBtn&&(visit&&visit.telegramMessageId))resendBtn.remove();}});}
+
+        // --- Data Management (Import/Export) ---
+        function exportVisitsText(type){const today=new Date().toLocaleDateString('ar-EG');let text=`سجل زيارات ${type==='today'?`اليوم ${today}`:'الكامل'}\n====================\n\n`;const data=(type==='today'?filterVisitsToday(visits):visits);if(data.length===0)text+='لا توجد زيارات.';else data.forEach((v,i)=>{text+=`${i+1}. ${v.studentName} (${v.classSection}) - ${v.visitReason}\n   ${v.day}, ${v.time}, ${v.fullDate} (الحالة: ${v.isSent?'مرسلة':'معلقة'}${v.telegramMessageId?` - ID:${v.telegramMessageId}`:''})\n\n`;});downloadFile(text,`${type}_visits_${today.replace(/\//g,'-')}.txt`,'text/plain');}
+        function exportVisitsJson(){downloadFile(JSON.stringify(visits,null,2),`visits_backup_${new Date().toLocaleDateString('en-CA').replace(/-/g,'')}.json`,'application/json');}
+        function handleImportVisits(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=(ev)=>{try{const d=JSON.parse(ev.target.result);if(!Array.isArray(d))throw new Error('ملف غير صالح.');let nC=0;const cIds=new Set(visits.map(v=>v.id));d.forEach(iV=>{if(iV.id&&iV.studentName&&iV.timestamp){if(!cIds.has(iV.id)){iV.needsStudentAdd=!students.some(s=>s.name===iV.studentName&&s.classSection===iV.classSection);visits.push({...iV,isSent:iV.isSent||false,telegramMessageId:iV.telegramMessageId||null});nC++;}else{/* Optional update */}}else console.warn("Skipping invalid visit:",iV);});visits.sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp));saveDataToLocalStorage();renderInitialUI();showNotification(`تم استيراد ${nC} زيارة.`,'success');}catch(err){showNotification(`خطأ استيراد: ${err.message}`,'error');}finally{e.target.value=null;}};r.readAsText(f);}
+        function exportStudentsJson(){downloadFile(JSON.stringify(students,null,2),`students_backup_${new Date().toLocaleDateString('en-CA').replace(/-/g,'')}.json`,'application/json');}
+        function handleImportStudents(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=(ev)=>{try{const d=JSON.parse(ev.target.result);if(!Array.isArray(d))throw new Error('ملف غير صالح.');let nC=0;const cIds=new Set(students.map(s=>s.id));d.forEach(iS=>{if(iS.name&&iS.classSection){const existing = students.find(s => s.name === iS.name && s.classSection === iS.classSection); if(!existing) {students.push({...iS, id: iS.id || generateUniqueId('stu')});nC++;}}else console.warn("Skipping invalid student:",iS);});saveDataToLocalStorage();updateStudentList();updateCounts();visits.forEach(v=>{if(v.needsStudentAdd)v.needsStudentAdd=!students.some(s=>s.name===v.studentName&&s.classSection===v.classSection);});saveDataToLocalStorage();updateVisitTables();showNotification(`تم استيراد ${nC} تلميذ.`,'success');}catch(err){showNotification(`خطأ استيراد: ${err.message}`,'error');}finally{e.target.value=null;}};r.readAsText(f);}
+
+        // --- Settings ---
+        function handleThemeChange(e){const sel=e.target.value;applyTheme(sel);localStorage.setItem('selectedTheme',sel);}
+        function applyTheme(theme){document.body.className=theme;}
+        function updateTelegramSettings(cb){if(cb.id==='silentTelegramDeleteToggle'){config.silentTelegramDelete=cb.checked;localStorage.setItem('silentTelegramDelete',config.silentTelegramDelete);showNotification(`الحذف الصامت ${config.silentTelegramDelete?'مفعل':'معطل'}.`,'info');}else if(cb.id==='directTelegramEditToggle'){config.directTelegramEdit=cb.checked;localStorage.setItem('directTelegramEdit',config.directTelegramEdit);showNotification(`التعديل المباشر ${config.directTelegramEdit?'مفعل':'معطل'}.`,'info');}}
+        function renderVisitReasonSuggestionsList(){const list=document.getElementById('reasonSuggestionsList');if(!list)return;list.innerHTML='';if(visitReasonSuggestions.length===0){list.innerHTML='<p style="color:var(--text-muted);">لا توجد اقتراحات.</p>';return;}visitReasonSuggestions.forEach((r,i)=>{const d=document.createElement('div');d.className='suggestion-item';d.innerHTML=`<span>${r}</span><button class="delete-btn action-btn" onclick="deleteVisitReasonSuggestion(${i})">حذف</button>`;list.appendChild(d);});}
+        function addNewReasonSuggestion(){const inp=document.getElementById('newReasonSuggestion'),nR=inp.value.trim();if(!nR){showNotification('أدخل نص الاقتراح.','error');return;}if(visitReasonSuggestions.includes(nR)){showNotification('الاقتراح موجود.','info');return;}visitReasonSuggestions.push(nR);saveDataToLocalStorage();renderVisitReasonSuggestionsList();inp.value='';showNotification(`تمت إضافة "${nR}".`,'success');}
+        function deleteVisitReasonSuggestion(idx){if(idx<0||idx>=visitReasonSuggestions.length)return;const r=visitReasonSuggestions[idx];if(confirm(`حذف الاقتراح: "${r}"؟`)){visitReasonSuggestions.splice(idx,1);saveDataToLocalStorage();renderVisitReasonSuggestionsList();showNotification(`تم حذف "${r}".`,'success');}}
+        function saveTelegramCredentials(){const nT=document.getElementById('telegramBotTokenInput').value.trim(),nC=document.getElementById('telegramChannelIdInput').value.trim();if(!nT||!nC){showNotification('أدخل رمز البوت والمعرف.','error');return;}config.botToken=nT;config.channelId=nC;localStorage.setItem('telegramBotToken',nT);localStorage.setItem('telegramChannelId',nC);TELEGRAM_API_BASE=config.botToken?`https://api.telegram.org/bot${config.botToken}/`:'';showNotification('تم حفظ إعدادات Telegram!','success');console.log("Updated TG Config:",config);validateTelegramConfig();}
+
+        // --- Utility Functions ---
+        function downloadFile(c,f,t){ const a=document.createElement('a'),b=new Blob([c],{type:t});a.href=URL.createObjectURL(b);a.download=f;a.click();URL.revokeObjectURL(a.href); }
+        function showNotification(m,type='success'){ const n=document.getElementById('notification');if(!n)return; n.textContent=m;n.className=`notification show ${type}`;setTimeout(()=>{n.classList.remove('show');},3500); }
+        function generateUniqueId(p='id'){ return`${p}_${Date.now().toString(36)}_${Math.random().toString(36).substring(2,7)}`; }
+        function showTodayVisits(){ const today=new Date().toLocaleDateString('ar-EG'),data=filterVisitsToday(visits);const win=window.open('','_blank');win.document.write(`<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8"><title>سجل اليوم (${today})</title><link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet"><style>body{font-family:'Tajawal',sans-serif;margin:20px;color:#333}h2{color:#5E5DF0;text-align:center}table{width:100%;border-collapse:collapse;margin-top:20px;border:1px solid #ccc}th,td{border:1px solid #ccc;padding:10px;text-align:center}th{background-color:#5E5DF0;color:white;font-weight:700}tr:nth-child(even){background-color:#f8f9fa}button{padding:8px 15px;background-color:#5E5DF0;color:white;border:none;border-radius:6px;cursor:pointer;font-family:'Tajawal';margin-bottom:15px}@media print{button{display:none}h2{color:#333!important}th{background-color:#eee!important;color:#333!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head><body><h2>سجل زيارات اليوم (${today})</h2><button onclick="window.print()">طباعة</button><table><thead><tr><th>#</th><th>اسم التلميذ</th><th>الصف</th><th>السبب</th><th>الوقت</th><th>الحالة</th></tr></thead><tbody>${data.map((v,i)=>`<tr><td>${i+1}</td><td>${v.studentName}</td><td>${v.classSection}</td><td>${v.visitReason}</td><td>${v.time}</td><td>${v.isSent?'أرسلت':'معلقة'}</td></tr>`).join('')||`<tr><td colspan="6" style="padding:20px;color:#888;">لا توجد زيارات.</td></tr>`}</tbody></table></body></html>`);win.document.close();if(document.getElementById('menu').classList.contains('active'))toggleMenu(); }
+
+    </script>
+</body>
+</html>
